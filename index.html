@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Re-bin - AI 기반 스마트 분리수거 시스템</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Pretendard', 'Noto Sans KR', sans-serif;
+            line-height: 1.7;
+            color: #1a1a1a;
+            background: #ffffff;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1.2rem 2rem;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #00A651;
+            letter-spacing: -0.5px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2.5rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: #00A651;
+            transition: width 0.3s;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        /* Hero Section */
+        .hero {
+            margin-top: 80px;
+            min-height: 90vh;
+            background: linear-gradient(135deg, #f8fff9 0%, #e8f5ff 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(0, 166, 81, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            top: -200px;
+            right: -200px;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-30px); }
+        }
+
+        .hero-content {
+            max-width: 1200px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 900;
+            line-height: 1.3;
+            margin-bottom: 2rem;
+            color: #1a1a1a;
+            animation: fadeInUp 1s ease;
+        }
+
+        .hero h1 .highlight {
+            color: #00A651;
+            position: relative;
+        }
+
+        .hero h1 .tech {
+            color: #2979FF;
+        }
+
+        .hero .subtitle {
+            font-size: 1.4rem;
+            color: #555;
+            margin-bottom: 3rem;
+            font-weight: 500;
+            animation: fadeInUp 1s ease 0.2s both;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 1.2rem 3rem;
+            background: linear-gradient(135deg, #2979FF 0%, #1565D8 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            box-shadow: 0 10px 30px rgba(41, 121, 255, 0.3);
+            transition: all 0.3s;
+            animation: fadeInUp 1s ease 0.4s both;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(41, 121, 255, 0.4);
+        }
+
+        /* Stats Bar */
+        .stats {
+            background: white;
+            padding: 3rem 2rem;
+            display: flex;
+            justify-content: center;
+            gap: 5rem;
+            box-shadow: 0 -5px 30px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 900;
+            color: #00A651;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: #666;
+            font-weight: 600;
+        }
+
+        /* Section Styles */
+        section {
+            padding: 6rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-size: 2.8rem;
+            font-weight: 900;
+            text-align: center;
+            margin-bottom: 1rem;
+            color: #1a1a1a;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 4rem;
+        }
+
+        /* Problem Section */
+        #problem {
+            background: linear-gradient(180deg, #fff 0%, #f8f8f8 100%);
+        }
+
+        .problem-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .problem-card {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s;
+        }
+
+        .problem-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
+        }
+
+        .problem-icon {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .problem-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #1a1a1a;
+            font-weight: 800;
+        }
+
+        .problem-stat {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #ff4444;
+            margin: 1rem 0;
+        }
+
+        /* Solution Section */
+        #solution {
+            background: linear-gradient(135deg, #00A651 0%, #008a45 100%);
+            color: white;
+        }
+
+        #solution .section-title,
+        #solution .section-subtitle {
+            color: white;
+        }
+
+        .solution-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2.5rem;
+            margin-top: 3rem;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            padding: 2.5rem;
+            border-radius: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.4rem;
+            margin-bottom: 1rem;
+            font-weight: 800;
+        }
+
+        /* Benefits Section */
+        .benefits-grid {
+            display: grid;
+            gap: 2rem;
+        }
+
+        .benefit-item {
+            display: grid;
+            grid-template-columns: 80px 1fr;
+            gap: 2rem;
+            background: linear-gradient(135deg, #f8fff9 0%, #e8f5ff 100%);
+            padding: 2.5rem;
+            border-radius: 20px;
+            border-left: 5px solid #00A651;
+            transition: all 0.3s;
+        }
+
+        .benefit-item:hover {
+            transform: translateX(10px);
+            box-shadow: 0 10px 30px rgba(0, 166, 81, 0.15);
+        }
+
+        .benefit-number {
+            font-size: 3rem;
+            font-weight: 900;
+            color: #2979FF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .benefit-content h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #1a1a1a;
+            font-weight: 800;
+        }
+
+        /* Trust Section */
+        #trust {
+            background: #f8f8f8;
+        }
+
+        .trust-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .trust-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.06);
+        }
+
+        .trust-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .trust-card h4 {
+            font-size: 1.2rem;
+            margin-bottom: 0.8rem;
+            color: #00A651;
+            font-weight: 800;
+        }
+
+        /* Pricing Section */
+        .pricing-box {
+            background: linear-gradient(135deg, #2979FF 0%, #1565D8 100%);
+            color: white;
+            padding: 4rem;
+            border-radius: 30px;
+            box-shadow: 0 20px 60px rgba(41, 121, 255, 0.3);
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .pricing-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .pricing-header h3 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            font-weight: 900;
+        }
+
+        .pricing-items {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .pricing-item {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 2rem;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .pricing-label {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        /* CTA Section */
+        #cta {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+            color: white;
+            text-align: center;
+            padding: 6rem 2rem;
+        }
+
+        #cta h2 {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+            font-weight: 900;
+        }
+
+        #cta p {
+            font-size: 1.3rem;
+            margin-bottom: 3rem;
+            opacity: 0.9;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            padding: 1.2rem 3rem;
+            background: #00A651;
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+            box-shadow: 0 10px 30px rgba(0, 166, 81, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0, 166, 81, 0.4);
+        }
+
+        .btn-secondary {
+            padding: 1.2rem 3rem;
+            background: transparent;
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            border: 2px solid white;
+            transition: all 0.3s;
+        }
+
+        .btn-secondary:hover {
+            background: white;
+            color: #1a1a1a;
+        }
+
+        /* Footer */
+        footer {
+            background: #1a1a1a;
+            color: #999;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.2rem;
+            }
+
+            .hero .subtitle {
+                font-size: 1.1rem;
+            }
+
+            .stats {
+                flex-direction: column;
+                gap: 2rem;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .benefit-item {
+                grid-template-columns: 1fr;
+            }
+
+            .pricing-item {
+                grid-template-columns: 1fr;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+
+        /* Smooth scroll */
+        html {
+            scroll-behavior: smooth;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="logo">Smart Re-bin</div>
+        <div class="nav-links">
+            <a href="#problem">문제</a>
+            <a href="#solution">솔루션</a>
+            <a href="#benefits">혜택</a>
+            <a href="#trust">신뢰</a>
+            <a href="#pricing">가격</a>
+            <a href="#cta">신청</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>
+                매일 버리는 쓰레기 <span class="highlight">3개 중 1개</span>가<br>
+                오염된다면?<br>
+                <span class="tech">AI</span>가 <span class="highlight">20초</span> 만에<br>
+                완벽한 분리수거를 보장합니다
+            </h1>
+            <p class="subtitle">
+                ESG 캠퍼스에 포인트를 돌려주는 스마트 분리수거 시스템
+            </p>
+            <a href="#cta" class="cta-button">시범 도입 신청하기 →</a>
+        </div>
+    </section>
+
+    <!-- Stats Bar -->
+    <div class="stats">
+        <div class="stat-item">
+            <div class="stat-number">60%+</div>
+            <div class="stat-label">재활용률 달성</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">20초</div>
+            <div class="stat-label">초간편 프로세스</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">99%</div>
+            <div class="stat-label">AI 인식 정확도</div>
+        </div>
+    </div>
+
+    <!-- Problem Section -->
+    <section id="problem">
+        <h2 class="section-title">대학 캠퍼스의 환경 문제</h2>
+        <p class="section-subtitle">'바쁘고 귀찮아서' 발생하는 역설적인 상황</p>
+        <div class="problem-grid">
+            <div class="problem-card">
+                <div class="problem-icon">🚨</div>
+                <h3>심각한 오류율</h3>
+                <div class="problem-stat">35%</div>
+                <p>대학 캠퍼스 분리배출 오류율은 전국 평균보다 심각합니다. 3개 중 1개는 잘못 분류되어 소각/매립됩니다.</p>
+            </div>
+            <div class="problem-card">
+                <div class="problem-icon">☕</div>
+                <h3>음료 잔액 오염</h3>
+                <p>캠퍼스 내 일회용 컵 잔액체가 재활용품을 오염시키는 주범입니다. 재활용 품질이 크게 저하되고 있습니다.</p>
+            </div>
+            <div class="problem-card">
+                <div class="problem-icon">⏱️</div>
+                <h3>피드백 부재</h3>
+                <p>수업 사이 단 10초 이내에 서둘러 쓰레기를 버리다 보니 분류할 여유가 없으며, 잘못 버려도 즉시 알려주는 시스템이 없습니다.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Solution Section -->
+    <section id="solution">
+        <h2 class="section-title">Smart Re-bin 솔루션</h2>
+        <p class="section-subtitle">AI가 환경 교육자가 되어 재활용률을 3배 높이는 스마트 시스템</p>
+        <div class="solution-features">
+            <div class="feature-card">
+                <div class="feature-icon">🤖</div>
+                <h3>초정밀 AI 재질 인식</h3>
+                <p>PET, 캔, 종이, 비닐, 일반쓰레기 등 5가지 이상 재질과 오염도까지 99% 정확도로 인식합니다.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">💧</div>
+                <h3>액체 자동 분리</h3>
+                <p>내장된 거름망과 드레인 탱크를 통해 음료 잔량을 자동으로 처리하여 재활용품 오염을 원천 차단합니다.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📱</div>
+                <h3>실시간 교육적 피드백</h3>
+                <p>올바른 배출 여부를 화면과 음성으로 즉시 알려줍니다. 분리배출률을 20% 개선하는 효과를 가져옵니다.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Benefits Section -->
+    <section id="benefits">
+        <h2 class="section-title">핵심 혜택</h2>
+        <p class="section-subtitle">캠퍼스에 제공하는 실질적 가치</p>
+        <div class="benefits-grid">
+            <div class="benefit-item">
+                <div class="benefit-number">01</div>
+                <div class="benefit-content">
+                    <h3>재활용률 60% 이상 달성</h3>
+                    <p>AI의 정확한 분류와 액체 자동 분리로 낭비되는 플라스틱을 60% 이상 살려냅니다. 재활용 오류율을 20%p 개선하여 캠퍼스의 환경 성과를 극대화합니다.</p>
+                </div>
+            </div>
+            <div class="benefit-item">
+                <div class="benefit-number">02</div>
+                <div class="benefit-content">
+                    <h3>학생 참여 유도 및 리워드 연계</h3>
+                    <p>QR 인증을 통해 분리수거 시마다 포인트를 적립하고, 이 포인트는 교내 카페/식당 할인, 기숙사비 할인 등 실제 혜택으로 환급되어 학생들의 지속적인 참여를 유도합니다.</p>
+                </div>
+            </div>
+            <div class="benefit-item">
+                <div class="benefit-number">03</div>
+                <div class="benefit-content">
+                    <h3>초간편 20초 프로세스</h3>
+                    <p>AI 인식-피드백-자동 분류-포인트 적립까지 단 20초 만에 완료됩니다. 바쁜 학생들의 일상에 방해되지 않도록 사용자 중심 설계를 최우선했습니다.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Trust Section -->
+    <section id="trust">
+        <h2 class="section-title">신뢰와 검증</h2>
+        <p class="section-subtitle">검증된 기술과 명확한 확산 로드맵</p>
+        <div class="trust-grid">
+            <div class="trust-card">
+                <div class="trust-icon">✅</div>
+                <h4>실현 가능성 증명</h4>
+                <p>충남대학교 시범 운영 계획을 통해 프로토타입과 연동 앱의 실현 가능성을 입증했습니다.</p>
+            </div>
+            <div class="trust-card">
+                <div class="trust-icon">🎯</div>
+                <h4>정량적 목표</h4>
+                <p>연간 CO₂ 감축량 2톤 (나무 300그루 식재 효과) 달성 및 학생 참여율 3배 증가</p>
+            </div>
+            <div class="trust-card">
+                <div class="trust-icon">🤝</div>
+                <h4>협력 기반 운영</h4>
+                <p>CNU 그리니티 플랫폼 연동 및 학생회/환경동아리 '청년 운영단'과의 협력</p>
+            </div>
+            <div class="trust-card">
+                <div class="trust-icon">🚀</div>
+                <h4>확산 비전</h4>
+                <p>2027년까지 대전 전역의 공공기관, 타 대학, 지역 카페로 확산하여 전국적 탄소 중립 효과 창출</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing">
+        <h2 class="section-title">베타 도입 프로그램</h2>
+        <p class="section-subtitle">캠퍼스 ESG 활동의 선두 주자가 될 초기 파트너를 모집합니다</p>
+        <div class="pricing-box">
+            <div class="pricing-header">
+                <h3>MVP 캠퍼스 한정 특별 혜택</h3>
+            </div>
+            <div class="pricing-items">
+                <div class="pricing-item">
+                    <div class="pricing-label">시범 도입 규모</div>
+                    <div>캠퍼스 내 주요 거점 (강의동, 도서관 등) 2~3곳 시범 설치</div>
+                </div>
+                <div class="pricing-item">
+                    <div class="pricing-label">초기 특별 혜택</div>
+                    <div>장비 초기 설치 비용 <strong>50% 할인</strong> 및 <strong>3개월 무상 유지보수</strong> 제공</div>
+                </div>
+                <div class="pricing-item">
+                    <div class="pricing-label">ESG 성과 지원</div>
+                    <div>정량적인 탄소 감축 데이터를 <strong>공식 보고서 형태로 제공</strong>하여 캠퍼스 ESG 성과 보고에 활용</div>
+                </div>
+                <div class="pricing-item">
+                    <div class="pricing-label">요청 사항</div>
+                    <div>3개월간 학생 설문조사 및 피드백 수렴에 적극 협조</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section id="cta">
+        <h2>"하나의 대학에서 시작된 변화가<br>전국을 바꿉니다"</h2>
+        <p>Smart Re-bin은 청년 세대가 주도하는 탄소중립 사회의 첫걸음입니다.<br>
+        지금 바로 캠퍼스 재활용 오류율을 낮추고, 학생 참여율을 극대화하여<br>
+        지속 가능한 미래 캠퍼스를 함께 설계하십시오.</p>
+        <div class="cta-buttons">
+            <a href="mailto:contact@smartrebin.com" class="btn-primary">시범 도입 문의하기</a>
+            <a href="#" class="btn-secondary">ESG 컨설팅 신청</a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2025 Smart Re-bin by 에코메이커스. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // Smooth scroll animation
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Navbar background on scroll
+        window.addEventListener('scroll', function() {
+            const nav = document.querySelector('nav');
+            if (window.scrollY > 50) {
+                nav.style.background = 'rgba(255, 255, 255, 0.98)';
+                nav.style.boxShadow = '0 2px 30px rgba(0, 0, 0, 0.1)';
+            } else {
+                nav.style.background = 'rgba(255, 255, 255, 0.95)';
+                nav.style.boxShadow = '0 2px 20px rgba(0, 0, 0, 0.05)';
+            }
+        });
+
+        // Intersection Observer for animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.problem-card, .feature-card, .benefit-item, .trust-card').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(30px)';
+            el.style.transition = 'all 0.6s ease';
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>
